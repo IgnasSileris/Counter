@@ -1,30 +1,32 @@
 var Count = [];
     var currentSort = 4;
-    function addCounter() {
+    function addCounter(num) {
+        if (num == undefined){
+            var num = 1;
+
+            let Box = {
+                    id: "",
+                    score: 0,
+                    name: ""
+            }
+            if (Count.length == 0) {
+                Box.id = "CounterBox1"
+            }
+            else {
+                for (let i = 0; i < Count.length; i++) {
+                    let thisId = Count[i].id;
+                    let currNum = parseInt(thisId.slice(-1));
+                    if (currNum >= num) {
+                        num = currNum + 1;
+                    }
+                }
+                Box.id = "CounterBox" + num.toString();
+            }
+            Count.push(Box);
+            storeProgram();
+        }
         let container = document.getElementById("container");
         let CountBox = document.createElement("div");
-        let num = 1;
-
-        let Box = {
-                id: "",
-                score: 0
-        }
-        if (Count.length == 0) {
-            Box.id = "CounterBox1"
-        }
-        else {
-            for (let i = 0; i < Count.length; i++) {
-                let thisId = Count[i].id;
-                let currNum = parseInt(thisId.slice(-1));
-                if (currNum >= num) {
-                    num = currNum + 1;
-                }
-            }
-            Box.id = "CounterBox" + num.toString();
-        }
-        
-        Count.push(Box);
-        localStorage.setItem('Boxes', JSON.stringify(Count)); //Local storage
         CountBox.className = "FirstCounter";
         CountBox.id = "CounterBox" + num.toString();
         container.appendChild(CountBox);
@@ -32,6 +34,7 @@ var Count = [];
         let ix = Count.findIndex(e => e.id === "CounterBox" + num.toString());
         updateDisplay("Score" + num.toString(), ix);
         toggleRemButton(Count.length);
+        
     }
     function createElements(num, obj) {
         let thisForm = document.createElement("form");
@@ -133,7 +136,7 @@ var Count = [];
         thisPar3.id = "AddCounterText";
         thisPar3.innerHTML = "Add counter";
 
-        if (Count.length == 1) {
+        if (Count.findIndex(e => e.id === "CounterBox" + num.toString()) == 0) {
             let SortBox = document.createElement("div");
             SortBox.className = "sortBox";
             SortBox.id = "SortBox"
@@ -180,37 +183,41 @@ var Count = [];
     }
     function updateDisplay(myId, ix){
         document.getElementById(myId).innerHTML = Count[ix].score;
+
     }
     function incrementCounter(num) {
         let ix = Count.findIndex(e => e.id === "CounterBox" + num.toString());
         Count[ix].score++;
-        localStorage.setItem('Boxes', JSON.stringify(Count)); //Local storage
+        storeProgram();
         let par = document.getElementById("Score" + num.toString());
         updateDisplay(par.id, ix);
     }
     function decrementCounter(num) {
         let ix = Count.findIndex(e => e.id === "CounterBox" + num.toString());
         Count[ix].score--;
-        localStorage.setItem('Boxes', JSON.stringify(Count)); //Local storage
+        storeProgram();
         let par = document.getElementById("Score" + num.toString());
         updateDisplay(par.id, ix);
     }
     function resetCounter(num) {
         let ix = Count.findIndex(e => e.id === "CounterBox" + num.toString());
         Count[ix].score = 0;
-        localStorage.setItem('Boxes', JSON.stringify(Count)); //Local storage
+        storeProgram();
         let par = document.getElementById("Score" + num.toString());
         updateDisplay(par.id, ix);
     }
     function displayNameInput(num) {
         let inputName = document.getElementById("Form" + num.toString()).value;
         document.getElementById("DisplayName" + num.toString()).innerHTML = inputName;
-        document.getElementById("Form" + num.toString()).value = ""
+        document.getElementById("Form" + num.toString()).value = "";
+        let ix = Count.findIndex(e => e.id === "CounterBox" + num.toString());
+        Count[ix].name = inputName;
+        storeProgram();
 }
     function removeCounter(num) {
         let ix = Count.findIndex(e => e.id === "CounterBox" + num.toString());
         Count.splice(ix,1);
-        localStorage.setItem('Boxes', JSON.stringify(Count)); //Local storage
+        storeProgram();
         if (ix == 0){
             reassignSort();
         }
@@ -236,7 +243,7 @@ var Count = [];
         let SortBox = document.getElementById("SortBox");
         parObj.appendChild(SortBox);
     }
-    function sortElements(sType) {
+    function sortElements(sType, storage) {
         currentSort = sType;
         switch(sType) {
             case 1:
@@ -285,9 +292,11 @@ var Count = [];
                 }
                 });
         }
-        localStorage.setItem('Boxes', JSON.stringify(Count)); //Local storage
-        reassignSort();
-        reorderDivs();
+        if (storage == undefined){
+            storeProgram();
+            reassignSort();
+            reorderDivs();
+        }
     }
     function reorderDivs() {
         var sortArr = [];
@@ -324,6 +333,16 @@ var Count = [];
         }
         else{
             Count = JSON.parse(localStorage.getItem('Boxes'));
-        
-        }
+            currentSort = JSON.parse(localStorage.getItem('Sort'));
+            for (var i=0; i < Count.length; i++){
+                let num = Count[i].id.slice(10);
+                addCounter(num);
+                document.getElementById("DisplayName" + num.toString()).innerHTML = Count[i].name;
+                sortElements(currentSort, true);
+            }
+    }
+    }
+    function storeProgram (){
+        localStorage.setItem('Boxes', JSON.stringify(Count)); //Local storage
+        localStorage.setItem('Sort', JSON.stringify(currentSort));
     }
